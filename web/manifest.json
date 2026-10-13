@@ -1,11 +1,11 @@
 {
-    "name": "la_toscana_driver",
-    "short_name": "la_toscana_driver",
+    "name": "La Toscana Reparto",
+    "short_name": "Reparto",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Herramienta interna de reparto de La Toscana Pizzeria.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
