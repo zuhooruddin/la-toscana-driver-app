@@ -4,7 +4,8 @@ typedef Json = Map<String, dynamic>;
 
 int _i(Object? v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
 String _s(Object? v) => v == null ? '' : '$v';
-Json _m(Object? v) => v is Map ? v.cast<String, dynamic>() : <String, dynamic>{};
+Json _m(Object? v) =>
+    v is Map ? v.cast<String, dynamic>() : <String, dynamic>{};
 
 class Assignment {
   Assignment({
@@ -36,14 +37,25 @@ class Assignment {
       driverState: _s(j['driverState']),
       customerName: _s(c['name']),
       customerPhone: c['phone'] == null ? null : '${c['phone']}',
-      address: [a['line1'], a['line2'], [a['postcode'], a['city']].where((x) => x != null).join(' ')].where((x) => x != null && '$x'.trim().isNotEmpty).join(', '),
+      address: [
+        a['line1'],
+        a['line2'],
+        [a['postcode'], a['city']].where((x) => x != null).join(' '),
+      ].where((x) => x != null && '$x'.trim().isNotEmpty).join(', '),
       addressNotes: a['notes'] == null ? null : '${a['notes']}',
-      estimatedReadyAt: j['estimatedReadyAt'] == null ? null : DateTime.tryParse('${j['estimatedReadyAt']}'),
-      items: (j['items'] as List? ?? const []).whereType<Map>().map((x) => '${_i(x['quantity'])}× ${x['name']}').toList(),
+      estimatedReadyAt: j['estimatedReadyAt'] == null
+          ? null
+          : DateTime.tryParse('${j['estimatedReadyAt']}'),
+      items: (j['items'] as List? ?? const [])
+          .whereType<Map>()
+          .map((x) => '${_i(x['quantity'])}× ${x['name']}')
+          .toList(),
       paymentMethod: _s(p['method']),
       collectCents: _i(p['collectCents']),
       simulated: p['simulated'] == true,
-      deliveredAt: j['deliveredAt'] == null ? null : DateTime.tryParse('${j['deliveredAt']}'),
+      deliveredAt: j['deliveredAt'] == null
+          ? null
+          : DateTime.tryParse('${j['deliveredAt']}'),
     );
   }
   final String id;

@@ -20,10 +20,16 @@ class DriverSession extends ChangeNotifier {
   final TokenStore tokens;
   bool ready = false;
   String? name;
+  String? email;
   bool mustChangePassword = false;
   bool get signedIn => name != null;
 
   List<Assignment>? assignments;
+  final Map<String, Assignment> _updatedAssignments = {};
+
+  Assignment? latestAssignment(String id) =>
+      assignments?.where((a) => a.id == id).firstOrNull ??
+      _updatedAssignments[id];
   Object? error;
   bool live = false;
   io.Socket? _socket;
@@ -38,7 +44,9 @@ class DriverSession extends ChangeNotifier {
 
   Future<void> init() async {
     await tokens.load();
-    shareLocation = (await SharedPreferences.getInstance()).getBool('lt_share_location') ?? false;
+    shareLocation =
+        (await SharedPreferences.getInstance()).getBool('lt_share_location') ??
+        false;
     if (tokens.hasSession) await _loadMe();
     ready = true;
     notifyListeners();
@@ -53,6 +61,7 @@ class DriverSession extends ChangeNotifier {
         return;
       }
       name = (u['name'] as String?) ?? '${u['email']}';
+      email = u['email'] as String?;
       mustChangePassword = u['mustChangePassword'] == true;
       if (!mustChangePassword) _start();
     } catch (_) {
@@ -62,9 +71,17 @@ class DriverSession extends ChangeNotifier {
   }
 
   Future<void> login(String email, String password) async {
-    final r = await api.post<Map<String, dynamic>>('/api/v1/auth/login', body: {'email': email, 'password': password, 'client': 'mobile'});
+    final r = await api.post<Map<String, dynamic>>(
+      '/api/v1/auth/login',
+      body: {'email': email, 'password': password, 'client': 'mobile'},
+    );
     if ((r['user'] as Map)['role'] != 'driver') {
-      await api.post('/api/v1/auth/logout', body: {'refreshToken': r['refreshToken']}).catchError((_) => null);
+      await api
+          .post(
+            '/api/v1/auth/logout',
+            body: {'refreshToken': r['refreshToken']},
+          )
+          .catchError((_) => null);
       throw ApiException(403, 'NOT_DRIVER', 'Not a driver account');
     }
     await tokens.save(r['accessToken'] as String, r['refreshToken'] as String);
@@ -72,7 +89,14 @@ class DriverSession extends ChangeNotifier {
   }
 
   Future<void> changePassword(String current, String next) async {
-    final r = await api.post<Map<String, dynamic>>('/api/v1/auth/change-password', body: {'currentPassword': current, 'newPassword': next, 'client': 'mobile'});
+    final r = await api.post<Map<String, dynamic>>(
+      '/api/v1/auth/change-password',
+      body: {
+        'currentPassword': current,
+        'newPassword': next,
+        'client': 'mobile',
+      },
+    );
     await tokens.save(r['accessToken'] as String, r['refreshToken'] as String);
     await _loadMe();
   }
@@ -95,7 +119,9 @@ class DriverSession extends ChangeNotifier {
     _socket = null;
     live = false;
     name = null;
+    email = null;
     assignments = null;
+    _updatedAssignments.clear();
     notifyListeners();
   }
 
@@ -106,7 +132,13 @@ class DriverSession extends ChangeNotifier {
     _socket?.dispose();
     final s = io.io(
       AppConfig.apiUrl,
-      io.OptionBuilder().setTransports(['websocket']).disableAutoConnect().enableForceNew().enableReconnection().setAuth({'token': tokens.access}).build(),
+      io.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect()
+          .enableForceNew()
+          .enableReconnection()
+          .setAuth({'token': tokens.access})
+          .build(),
     );
     // Drivers are put in their own room by the server on connect (no join needed).
     s.onConnect((_) {
@@ -119,7 +151,9 @@ class DriverSession extends ChangeNotifier {
       notifyListeners();
     });
     s.onReconnectAttempt((_) => s.auth = {'token': tokens.access});
-    s.onConnectError((_) => api.get<dynamic>('/api/v1/auth/me').catchError((_) => null));
+    s.onConnectError(
+      (_) => api.get<dynamic>('/api/v1/auth/me').catchError((_) => null),
+    );
     s.on('order.created', (_) => refresh());
     s.on('order.updated', (_) => refresh());
     s.connect();
@@ -128,11 +162,16 @@ class DriverSession extends ChangeNotifier {
 
   Future<void> refresh() async {
     try {
-      final r = await api.get<Map<String, dynamic>>('/api/v1/driver/assignments');
-      final next = (r['items'] as List).map((x) => Assignment.fromJson((x as Map).cast<String, dynamic>())).toList();
+      final r = await api.get<Map<String, dynamic>>(
+        '/api/v1/driver/assignments',
+      );
+      final next = (r['items'] as List)
+          .map((x) => Assignment.fromJson((x as Map).cast<String, dynamic>()))
+          .toList();
       // Alert for deliveries newly assigned to me (not on the first load).
       final known = assignments?.map((a) => a.id).toSet();
-      if (known != null && next.any((a) => a.canRespond && !known.contains(a.id))) {
+      if (known != null &&
+          next.any((a) => a.canRespond && !known.contains(a.id))) {
         HapticFeedback.heavyImpact();
         SystemSound.play(SystemSoundType.alert);
       }
@@ -146,13 +185,23 @@ class DriverSession extends ChangeNotifier {
   }
 
   Future<void> act(Assignment a, String action) async {
-    await api.post('/api/v1/driver/assignments/${a.id}/$action', body: {});
+    final result = await api.post<Map<String, dynamic>>(
+      '/api/v1/driver/assignments/${a.id}/$action',
+      body: {},
+    );
+    if (result['assignment'] is Map) {
+      _updatedAssignments[a.id] = Assignment.fromJson(
+        (result['assignment'] as Map).cast<String, dynamic>(),
+      );
+    }
     await refresh();
   }
 
   Future<List<Assignment>> history() async {
     final r = await api.get<Map<String, dynamic>>('/api/v1/driver/history');
-    return (r['items'] as List).map((x) => Assignment.fromJson((x as Map).cast<String, dynamic>())).toList();
+    return (r['items'] as List)
+        .map((x) => Assignment.fromJson((x as Map).cast<String, dynamic>()))
+        .toList();
   }
 
   // ---------------------------------------------------------------- location (consent, foreground only)
@@ -173,13 +222,16 @@ class DriverSession extends ChangeNotifier {
 
   Future<bool> _ensurePermission() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      locationProblem = 'Activa la ubicación del teléfono.';
+      locationProblem = 'LOCATION_DISABLED';
       return false;
     }
     var p = await Geolocator.checkPermission();
-    if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
-    if (p == LocationPermission.denied || p == LocationPermission.deniedForever) {
-      locationProblem = 'Sin permiso de ubicación. Puedes darlo en los ajustes del teléfono.';
+    if (p == LocationPermission.denied) {
+      p = await Geolocator.requestPermission();
+    }
+    if (p == LocationPermission.denied ||
+        p == LocationPermission.deniedForever) {
+      locationProblem = 'LOCATION_PERMISSION';
       return false;
     }
     locationProblem = null;
@@ -193,13 +245,32 @@ class DriverSession extends ChangeNotifier {
     if (_sharingOrderId == active.id && _gps != null) return;
     _stopGps();
     _sharingOrderId = active.id;
-    _gps = Geolocator.getPositionStream(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 25)).listen((pos) async {
-      if (DateTime.now().difference(_lastSent).inSeconds < 15) return; // at most every 15 s
-      _lastSent = DateTime.now();
-      try {
-        await api.post('/api/v1/driver/location', body: {'orderId': active.id, 'lat': pos.latitude, 'lng': pos.longitude, 'accuracy': pos.accuracy, 'consent': true});
-      } catch (_) {/* delivery may have just been completed */}
-    }, onError: (_) => _stopGps());
+    _gps =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 25,
+          ),
+        ).listen((pos) async {
+          if (DateTime.now().difference(_lastSent).inSeconds < 15) {
+            return; // at most every 15 s
+          }
+          _lastSent = DateTime.now();
+          try {
+            await api.post(
+              '/api/v1/driver/location',
+              body: {
+                'orderId': active.id,
+                'lat': pos.latitude,
+                'lng': pos.longitude,
+                'accuracy': pos.accuracy,
+                'consent': true,
+              },
+            );
+          } catch (_) {
+            /* delivery may have just been completed */
+          }
+        }, onError: (_) => _stopGps());
   }
 
   void _stopGps() {
