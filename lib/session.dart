@@ -190,9 +190,19 @@ class DriverSession extends ChangeNotifier {
       body: {},
     );
     if (result['assignment'] is Map) {
-      _updatedAssignments[a.id] = Assignment.fromJson(
+      final updated = Assignment.fromJson(
         (result['assignment'] as Map).cast<String, dynamic>(),
       );
+      _updatedAssignments[a.id] = updated;
+      assignments = assignments
+          ?.map((item) => item.id == a.id ? updated : item)
+          .where(
+            (item) =>
+                !['delivered', 'refunded', 'cancelled'].contains(item.status) &&
+                item.driverState != 'declined',
+          )
+          .toList();
+      notifyListeners();
     }
     await refresh();
   }

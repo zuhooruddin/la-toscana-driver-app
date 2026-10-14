@@ -57,9 +57,13 @@ String errorText(Object e, [String lang = 'es']) {
       'Este reparto ya no está asignado a ti.',
       'This delivery is no longer assigned to you.',
     ),
-    'INVALID_PASSWORD': (
+    'INVALID_CURRENT_PASSWORD': (
       'La contraseña actual no es correcta.',
       'The current password is incorrect.',
+    ),
+    'PASSWORD_UNCHANGED': (
+      'Elige una contraseña diferente.',
+      'Choose a different password.',
     ),
     'UNAUTHORIZED': (
       'Tu sesión ha caducado. Inicia sesión de nuevo.',
@@ -1134,8 +1138,10 @@ class _OrderActionState extends State<_OrderAction> {
       if (ok != true || !mounted) return;
     }
     setState(() => _busy = true);
+    final navigator = Navigator.of(context);
+    final session = context.read<DriverSession>();
     try {
-      await context.read<DriverSession>().act(
+      await session.act(
         a,
         a.canRespond
             ? 'accept'
@@ -1143,10 +1149,17 @@ class _OrderActionState extends State<_OrderAction> {
             ? 'picked-up'
             : 'delivered',
       );
-      if (!mounted) return;
       if (a.canDeliver) {
-        _push(context, DeliveryCompleteScreen(assignment: a));
-      } else {
+        if (navigator.mounted) {
+          navigator.push(
+            MaterialPageRoute<void>(
+              builder: (_) => DeliveryCompleteScreen(
+                assignment: session.latestAssignment(a.id) ?? a,
+              ),
+            ),
+          );
+        }
+      } else if (mounted) {
         _snack(
           context,
           context.tr(

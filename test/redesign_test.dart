@@ -53,6 +53,10 @@ class TestSession extends DriverSession {
   @override
   Future<void> act(Assignment a, String action) async {
     actions.add(action);
+    if (action == 'delivered') {
+      assignments = assignments!.where((x) => x.id != a.id).toList();
+      notifyListeners();
+    }
   }
 }
 
