@@ -50,7 +50,7 @@ ThemeData buildTheme() {
       style: FilledButton.styleFrom(
         backgroundColor: Brand.tomato,
         foregroundColor: Colors.white,
-        minimumSize: const Size(48, 50),
+        minimumSize: const Size(48, 44),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
       ),
@@ -58,7 +58,7 @@ ThemeData buildTheme() {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: Brand.tomatoDark,
-        minimumSize: const Size(48, 46),
+        minimumSize: const Size(48, 40),
         side: const BorderSide(color: Brand.border),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),

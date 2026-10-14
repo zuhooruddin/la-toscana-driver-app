@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'core/api.dart';
+import 'core/food_photo.dart';
+import 'core/route_preview.dart';
 import 'core/format.dart';
 import 'core/language.dart';
 import 'core/theme.dart';
@@ -262,7 +264,10 @@ class _LoginScreenState extends State<LoginScreen> {
     body: Stack(
       children: [
         Positioned.fill(
-          child: Image.asset('assets/images/banner.jpg', fit: BoxFit.cover),
+          child: Image.asset(
+            'assets/images/driver-login.png',
+            fit: BoxFit.cover,
+          ),
         ),
         Positioned.fill(
           child: DecoratedBox(
@@ -270,9 +275,11 @@ class _LoginScreenState extends State<LoginScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
+                stops: const [0, .55, 1],
                 colors: [
-                  Colors.black.withValues(alpha: .48),
-                  Brand.green.withValues(alpha: .94),
+                  Colors.white.withValues(alpha: .22),
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: .35),
                 ],
               ),
             ),
@@ -281,31 +288,31 @@ class _LoginScreenState extends State<LoginScreen> {
         SafeArea(
           child: LayoutBuilder(
             builder: (c, bounds) => SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(22),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: (bounds.maxHeight - 48).clamp(0, double.infinity),
+                  minHeight: (bounds.maxHeight - 44).clamp(0, double.infinity),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Align(
                       alignment: Alignment.centerRight,
                       child: LanguageSwitch(),
                     ),
-                    const SizedBox(height: 36),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: const BrandLogo(size: 82),
+                    const SizedBox(height: 18),
+                    const Center(child: BrandLogo(size: 76)),
+                    const SizedBox(height: 12),
+                    Text(
+                      'La Toscana',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Playfair',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Brand.charcoal,
                       ),
                     ),
-                    const SizedBox(height: 24),
                     Text(
                       c.tr(
                         'Tu ruta, nuestra cocina.',
@@ -313,109 +320,51 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontFamily: 'Playfair',
-                        fontSize: 30,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      c.tr(
-                        'Cada reparto, una buena experiencia.',
-                        'A great experience with every delivery.',
-                      ),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white70,
                         fontSize: 13,
+                        color: Brand.charcoal,
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: _email,
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.username],
+                      decoration: InputDecoration(
+                        hintText: c.tr('Correo electrónico', 'Email address'),
+                        prefixIcon: const Icon(Icons.mail_outline, size: 19),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                    ),
+                    const SizedBox(height: 10),
+                    PasswordField(
+                      controller: _password,
+                      label: c.tr('Contraseña', 'Password'),
+                      onSubmitted: _submit,
+                    ),
+                    const SizedBox(height: 14),
+                    FilledButton(
+                      onPressed: _busy ? null : _submit,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            c.tr('Bienvenido de nuevo', 'Welcome back'),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
+                          const SizedBox(width: 20),
                           Text(
                             c.tr(
-                              'Inicia sesión para ver tus repartos.',
-                              'Sign in to see your deliveries.',
-                            ),
-                            style: const TextStyle(
-                              color: Brand.muted,
-                              fontSize: 12,
+                              _busy ? 'Entrando…' : 'Entrar',
+                              _busy ? 'Signing in…' : 'Sign in',
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          TextField(
-                            controller: _email,
-                            keyboardType: TextInputType.emailAddress,
-                            autofillHints: const [AutofillHints.username],
-                            decoration: InputDecoration(
-                              labelText: c.tr(
-                                'Correo electrónico',
-                                'Email address',
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.mail_outline,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          PasswordField(
-                            controller: _password,
-                            label: c.tr('Contraseña', 'Password'),
-                            onSubmitted: _submit,
-                          ),
-                          const SizedBox(height: 20),
-                          FilledButton(
-                            onPressed: _busy ? null : _submit,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (_busy)
-                                  const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                else
-                                  Text(c.tr('Entrar', 'Sign in')),
-                                const SizedBox(width: 12),
-                                const Icon(Icons.arrow_forward, size: 20),
-                              ],
-                            ),
-                          ),
+                          const Icon(Icons.arrow_forward, size: 20),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    SizedBox(height: (bounds.maxHeight - 530).clamp(100, 420)),
                     Text(
                       c.tr(
                         'Tu cuenta la crea el restaurante.',
                         'Your account is created by the restaurant.',
                       ),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ],
                 ),
@@ -953,95 +902,126 @@ class _DeliveryCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       onTap: () => _push(c, DeliveryDetailScreen(assignment: a)),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFE8EC),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.delivery_dining,
-                    color: Brand.tomato,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 12),
+                FoodPhoto(a.items.firstOrNull ?? '', size: 64),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _Status(a),
-                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          _Status(a),
+                          const Spacer(),
+                          if (a.estimatedReadyAt != null && !a.onTheWay)
+                            Text(
+                              '~ ${hhmm(a.estimatedReadyAt!)}',
+                              style: const TextStyle(
+                                color: Brand.muted,
+                                fontSize: 10,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
                       Text(
                         a.number,
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
-                          fontSize: 16,
+                          fontSize: 15,
                         ),
+                      ),
+                      Text(
+                        a.customerName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on,
+                            size: 13,
+                            color: Brand.tomato,
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              a.address,
+                              maxLines: 2,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Brand.muted,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                if (a.estimatedReadyAt != null && !a.onTheWay)
-                  Text(
-                    '~ ${hhmm(a.estimatedReadyAt!)}',
-                    style: const TextStyle(color: Brand.muted, fontSize: 11),
-                  ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              a.customerName,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-            ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 9),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on, color: Brand.tomato, size: 15),
+                for (final item in a.items.take(2))
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: FoodPhoto(item, size: 36),
+                  ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    a.address,
-                    style: const TextStyle(color: Brand.muted, fontSize: 11),
+                    a.items.join('\n'),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Brand.muted,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              a.items.join('\n'),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Brand.muted,
-                fontSize: 11,
-                height: 1.7,
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _Payment(a),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: () =>
-                        _push(c, DeliveryDetailScreen(assignment: a)),
-                    child: Text(
-                      c.tr('Ver detalles', 'View details'),
-                      style: const TextStyle(fontSize: 11),
+                  child: OutlinedButton.icon(
+                    onPressed: () => _push(c, NavigationScreen(assignment: a)),
+                    icon: const Icon(Icons.near_me_outlined, size: 14),
+                    label: Text(
+                      c.tr('Navegar', 'Navigate'),
+                      style: const TextStyle(fontSize: 10),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
+                if (a.customerPhone != null) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () =>
+                          _open(c, Uri(scheme: 'tel', path: a.customerPhone)),
+                      icon: const Icon(Icons.call, size: 14),
+                      label: Text(
+                        c.tr('Llamar', 'Call'),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
                 Expanded(child: _OrderAction(a: a, compact: true)),
               ],
             ),
@@ -1257,6 +1237,18 @@ class DeliveryDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           _AddressPanel(a),
+          const SizedBox(height: 12),
+          RoutePreview(
+            label: c.tr('Ver en Google Maps', 'View in Google Maps'),
+            onOpen: () => _open(
+              c,
+              Uri.https('www.google.com', '/maps/dir/', {
+                'api': '1',
+                'destination': a.address,
+                'travelmode': 'driving',
+              }),
+            ),
+          ),
           if (a.addressNotes != null)
             Padding(
               padding: const EdgeInsets.only(top: 10),
@@ -1303,18 +1295,7 @@ class DeliveryDetailScreen extends StatelessWidget {
               children: [
                 for (final item in a.items)
                   ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Brand.cream,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.restaurant_outlined,
-                        color: Brand.tomato,
-                        size: 22,
-                      ),
-                    ),
+                    leading: FoodPhoto(item, size: 42),
                     title: Text(
                       item,
                       style: const TextStyle(
@@ -1566,12 +1547,39 @@ class DeliveryCompleteScreen extends StatelessWidget {
                   style: const TextStyle(color: Brand.muted, fontSize: 12),
                 ),
                 const SizedBox(height: 18),
+                for (final item in assignment.items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        FoodPhoto(item, size: 36),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Brand.muted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 8),
                 _Payment(assignment),
               ],
             ),
           ),
         ),
         const SizedBox(height: 24),
+        OutlinedButton.icon(
+          onPressed: () =>
+              _push(c, DeliveryDetailScreen(assignment: assignment)),
+          icon: const Icon(Icons.receipt_long_outlined, size: 18),
+          label: Text(c.tr('Ver detalles', 'View details')),
+        ),
+        const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: () => Navigator.of(c).popUntil((r) => r.isFirst),
           icon: const Icon(Icons.home_outlined),
@@ -1674,28 +1682,19 @@ class NavigationScreen extends StatelessWidget {
     body: ListView(
       padding: const EdgeInsets.all(24),
       children: [
+        RoutePreview(
+          height: 320,
+          label: c.tr('Abrir en Google Maps', 'Open in Google Maps'),
+          onOpen: () => _open(
+            c,
+            Uri.https('www.google.com', '/maps/dir/', {
+              'api': '1',
+              'destination': assignment.address,
+              'travelmode': 'driving',
+            }),
+          ),
+        ),
         const SizedBox(height: 16),
-        const Center(
-          child: CircleAvatar(
-            radius: 48,
-            backgroundColor: Color(0xFFFFE8EC),
-            child: Icon(Icons.route, size: 48, color: Brand.tomato),
-          ),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          c.tr(
-            'De nuestra cocina\na su puerta.',
-            'From our kitchen\nto their door.',
-          ),
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFamily: 'Playfair',
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 28),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(20),

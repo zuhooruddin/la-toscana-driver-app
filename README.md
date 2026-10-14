@@ -5,6 +5,8 @@ Flutter app for La Toscana's delivery drivers. Same backend and database as the 
 
 ## Features
 
+- Branded login, compact delivery filters, delivery details/progress, route handoff, completion screen, account drawer and settings
+- Spanish and English throughout the interface; change ES/EN on login, in the account drawer or in Settings. The choice is saved on the device.
 - Sign in (driver accounts only, created in the dashboard), forced change of the temporary password
 - Live assignments (Socket.IO driver room + 30 s resync), vibration + sound for a new assignment
 - Accept / decline; "waiting for the kitchen" until the order is marked ready; picked up → out for delivery; delivered

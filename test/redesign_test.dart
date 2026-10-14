@@ -161,7 +161,7 @@ void main() {
     (tester) async {
       final s = TestSession()..name = null;
       await mount(tester, s, AppLanguage('en'));
-      expect(find.text('Welcome back'), findsOneWidget);
+      expect(find.text('Your route. Our kitchen.'), findsOneWidget);
       expect(find.byType(BrandLogo), findsOneWidget);
       await tester.ensureVisible(find.text('Sign in'));
       await tester.tap(find.text('Sign in'));
