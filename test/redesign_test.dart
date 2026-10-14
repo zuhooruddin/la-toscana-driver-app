@@ -56,6 +56,7 @@ class TestSession extends DriverSession {
     if (action == 'delivered') {
       assignments = assignments!.where((x) => x.id != a.id).toList();
       notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
     }
   }
 }
